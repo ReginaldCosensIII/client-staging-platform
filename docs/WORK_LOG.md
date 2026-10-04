@@ -139,5 +139,36 @@
 - **Final Cleanup:**
   - Stopped container via `docker compose down`.
   - Verified `docker compose ps` shows no running containers.
-  - Verified `Get-Process cloudflared` shows no lingering background tunnel processes.
-- **Commit Hash:** `c25281c`
+- **Commit Hash:** `ccf5f37`
+
+---
+
+## Checkpoint CP-002R1: cloudflared Documentation and Installation Normalization
+
+- **Date:** 2026-10-04
+- **Branch:** `feat/cp-002-protected-quick-tunnel`
+- **Reason for Repair:** Following Architect review of CP-002, two cleanup items were addressed:
+  1. Corrected an inaccurate documented version floor (`>= 2024.9.0`), normalizing version guidance across all documentation to state: *"Use a current `cloudflared` release that supports the `--allowed-mail` option (CP-002 was validated with `cloudflared 2026.9.3`)"*.
+  2. Normalized local workstation installation by removing the duplicate binary from `C:\Users\Regin\AppData\Local\Microsoft\WindowsApps\cloudflared.exe` and confirming the canonical installation at `C:\Users\Regin\AppData\Local\Programs\cloudflared\cloudflared.exe` on User PATH.
+- **Files Modified:**
+  - `README.md`: Replaced inaccurate `2024.9.0` minimum version with preferred reusable version guidance.
+  - `infrastructure/cloudflare/README.md`: Updated `cloudflared` prerequisite version requirement.
+  - `docs/WORK_LOG.md`: Documented CP-002R1 repair scope, normalization, and regression validation.
+- **Installation Normalization & Verification:**
+  - Verified presence of canonical binary at `C:\Users\Regin\AppData\Local\Programs\cloudflared\cloudflared.exe`.
+  - Removed duplicate copy from `C:\Users\Regin\AppData\Local\Microsoft\WindowsApps\cloudflared.exe`.
+  - Cleaned and verified User PATH (`HKCU:\Environment\Path`) containing `C:\Users\Regin\AppData\Local\Programs\cloudflared` exactly once.
+  - Verified command resolution: `Get-Command cloudflared` and `where.exe cloudflared` resolve to `C:\Users\Regin\AppData\Local\Programs\cloudflared\cloudflared.exe`.
+  - Verified binary version: `cloudflared version 2026.9.3 (built 2026-09-24T08:31 UTC)`.
+  - Confirmed feature support: `cloudflared tunnel --help` confirms `--allowed-mail` flag is recognized.
+- **Lightweight Quick Regression Test:**
+  - Started Docker container via `docker compose up -d`.
+  - Verified local origin: `curl.exe -I http://127.0.0.1:8080` returned `HTTP/1.1 200 OK`.
+  - Started protected Quick Tunnel: `cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail cesdeveloperservices@gmail.com`.
+  - Verified successful startup and capture of temporary URL (`https://expression-monday-items-agencies.trycloudflare.com`).
+  - Confirmed tunnel log advertised `Authentication: One-Time PIN (using Cloudflare Access)`.
+  - Verified HTTP request redirect to Cloudflare Access login challenge (`302 Found`).
+  - Terminated Quick Tunnel process.
+  - Stopped Docker container via `docker compose down`.
+  - Confirmed zero project containers and zero lingering `cloudflared` processes.
+- **Commit Hash:** `acb48a2`

@@ -38,7 +38,7 @@ To run and validate the local development environment and protected tunnel, the 
 - **Git:** >= 2.40
 - **Docker:** Engine >= 24.0 (Docker Desktop or Linux Docker Engine)
 - **Docker Compose:** v2 or v5 plugin (`docker compose`)
-- **cloudflared:** >= 2024.9.0 with `--allowed-mail` support (Windows x64 standalone or package install)
+- **cloudflared:** Use a current `cloudflared` release that supports the `--allowed-mail` option (CP-002 was validated with `cloudflared 2026.9.3`).
 
 ---
 

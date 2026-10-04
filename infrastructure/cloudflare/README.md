@@ -16,7 +16,7 @@ This mechanism was empirically proven and validated during **CP-002**.
    - The origin must not be published across LAN or public host interfaces (`0.0.0.0`).
 2. **`cloudflared` CLI Utility:**
    - Must be installed on the host system (Windows x64 / Linux).
-   - Version requirement: `>= 2024.9.0` (validated with `2026.9.3`).
+   - Version requirement: Use a current `cloudflared` release that supports the `--allowed-mail` option (CP-002 was validated with `cloudflared 2026.9.3`).
    - Must support the `--allowed-mail` flag (`cloudflared tunnel --help`).
    - No Cloudflare account, login (`cloudflared tunnel login`), `cert.pem`, or API tokens are required.
 
