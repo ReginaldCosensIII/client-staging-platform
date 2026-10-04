@@ -7,7 +7,7 @@
 - **Remote Origin:** `https://github.com/ReginaldCosensIII/client-staging-platform.git`
 - **Stable Branch:** `main`
 - **Working Branch:** `chore/cp-001-repository-foundation`
-- **Commit Hash:** `a9f4367` (baseline `b226933`)
+- **Commit Hash:** `e985602` (baseline `b226933`)
 
 ---
 
@@ -65,3 +65,29 @@
 - CP-003+: Remote preview host provisioning on Google Cloud Compute Engine or equivalent.
 - CP-004+: Packaging and deployment of the actual USAP client application.
 - CP-005+: Custom domain configuration and named Cloudflare Tunnels.
+
+---
+
+## Checkpoint CP-001R1: Localhost Binding Hardening
+
+- **Date:** 2026-10-04
+- **Branch:** `chore/cp-001-repository-foundation`
+- **Reason for Repair:** Following Architect review, the Docker Compose port publication was hardened to explicitly bind to IPv4 loopback (`127.0.0.1:${PREVIEW_LOCAL_PORT:-8080}:80`) rather than publishing across all host interfaces (`0.0.0.0:8080`). This eliminates exposure on local LAN interfaces and prepares the origin cleanly for `cloudflared` in CP-002.
+- **Files Modified:**
+  - `docker-compose.yml`: Updated port publication to `127.0.0.1:${PREVIEW_LOCAL_PORT:-8080}:80`.
+  - `README.md`: Documented explicit 127.0.0.1 loopback host binding.
+  - `docs/ARCHITECTURE.md`: Clarified loopback-only binding in architecture diagrams and network descriptions.
+  - `docs/SECURITY.md`: Enhanced Section 2.8 covering local and remote loopback-only bindings.
+  - `docs/DEPLOYMENT.md`: Clarified Tier 1 local development host binding to 127.0.0.1.
+  - `infrastructure/docker/README.md`: Documented loopback binding in Compose operations.
+  - `docs/WORK_LOG.md`: Documented CP-001R1 repair scope, files, and validation.
+- **Validation Executed:**
+  - Verified `git diff --check` passes with zero whitespace errors.
+  - Verified `docker compose config` reports `host_ip: 127.0.0.1`.
+  - Built and started workload via `docker compose up -d`.
+  - Verified `docker compose ps` shows `127.0.0.1:8080->80/tcp` (and not `0.0.0.0:8080`).
+  - Verified host TCP listener using `Get-NetTCPConnection` bound to `127.0.0.1:8080`.
+  - Verified HTTP `200 OK` via `curl.exe -i http://127.0.0.1:8080`.
+  - Verified container recreation via `docker compose down` and `docker compose up -d`, followed by re-verification.
+  - Stopped container via `docker compose down`.
+- **Commit Hash:** `16ca4ab`

@@ -54,6 +54,6 @@ docker compose down
 
 The Compose specification (`docker-compose.yml`) avoids host-specific absolute filesystem paths or platform-dependent assumptions:
 - Context paths are relative (`./examples/preview-test`).
-- Port mappings and container names use fallback environment variables (`${PREVIEW_LOCAL_PORT:-8080}`).
+- Port mappings explicitly bind to host IPv4 loopback (`127.0.0.1:${PREVIEW_LOCAL_PORT:-8080}:80`), ensuring the service is not exposed to LAN or public interfaces.
 - Sane restart policy (`unless-stopped`) ensures auto-recovery.
 - Identical Compose commands deploy and manage the containers on any remote Linux VM.

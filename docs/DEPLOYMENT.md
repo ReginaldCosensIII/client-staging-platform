@@ -21,7 +21,8 @@ Tier 4: Stable Multi-Tenant Platform (Long-Term)
 ### Tier 1: Local Development (CP-001)
 - **Host:** Local developer workstation (Windows 11 / WSL2).
 - **Orchestration:** Docker Compose (`docker-compose.yml`).
-- **Network Scope:** Loopback (`http://localhost:8080`).
+- **Network Scope:** Loopback (`http://127.0.0.1:8080` / `http://localhost:8080`).
+- **Host Binding:** Bound strictly to IPv4 loopback (`127.0.0.1`) to prevent LAN exposure.
 - **Purpose:** Verifies container image build, container lifecycle, port binding, and base HTML rendering.
 - **Access Boundary:** Local host only.
 

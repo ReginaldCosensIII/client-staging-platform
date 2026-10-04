@@ -52,7 +52,7 @@ Copy the example configuration to `.env` if custom port or container naming is d
 cp .env.example .env
 ```
 
-Default settings map port `8080` on the host to container port `80`.
+Default settings map port `8080` on host loopback (`127.0.0.1`) to container port `80`, ensuring the service is isolated from local network (LAN) and external interfaces.
 
 ### 4.2 Build and Start the Workload
 

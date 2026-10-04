@@ -36,8 +36,8 @@ Random or unguessable URLs (e.g., secret GUID paths) are insufficient for protec
 ### 2.7 No Anonymous Public Preview
 Client staging previews will never be left accessible to anonymous visitors without an active, explicit decision and protective boundaries.
 
-### 2.8 Prevention of Alternate Public Origins
-Containers must never be accidentally bound to public host interfaces without perimeter protection. On remote hosts, container ports bind to `127.0.0.1` or internal Docker networks, preventing bypass of the edge authentication layer.
+### 2.8 Prevention of Alternate Public Origins & Loopback Binding
+Containers must never be bound to all interfaces (`0.0.0.0`) or exposed across local LAN interfaces without perimeter protection. In local development and remote hosts alike, container ports bind strictly to host loopback (`127.0.0.1`) or private Docker bridge networks, ensuring services are reachable only via local loopback or through the authorized `cloudflared` tunnel agent.
 
 ---
 

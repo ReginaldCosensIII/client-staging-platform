@@ -28,7 +28,7 @@ Local developer workstation hosting a static verification container via Docker C
 | Local Browser (Dev PC)  |
 +-------------------------+
             |
-            | HTTP: http://localhost:8080
+            | HTTP: http://127.0.0.1:8080 (Loopback only)
             v
 +-------------------------+
 | Local Docker Host       |
@@ -148,5 +148,5 @@ The long-term Version III architecture hosting multiple containerized staging pr
 ## 3. Component Details & Network Isolation
 
 - **Client Container Isolation:** Client preview containers run on an internal Docker bridge network (`staging-network`).
-- **No Direct Inbound Exposure:** Host ports do not need to be bound to `0.0.0.0` in remote staging mode; `cloudflared` routes directly to the local Docker port or Docker network alias.
+- **No Direct Inbound Exposure:** Host ports are never bound to `0.0.0.0` or open LAN interfaces. The local test workload binds strictly to host loopback (`127.0.0.1`), and in CP-002 `cloudflared` routes directly to this local loopback origin.
 - **Portability:** Moving from one provider to another is accomplished solely by starting Docker and the tunnel configuration on the target host.
