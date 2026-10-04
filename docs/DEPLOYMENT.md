@@ -26,10 +26,13 @@ Tier 4: Stable Multi-Tenant Platform (Long-Term)
 - **Purpose:** Verifies container image build, container lifecycle, port binding, and base HTML rendering.
 - **Access Boundary:** Local host only.
 
-### Tier 2: Protected Quick Tunnel Proof (CP-002)
-- **Host:** Local developer workstation.
-- **Routing:** Ad-hoc Cloudflare Quick Tunnel (`cloudflared tunnel --url http://localhost:8080`).
-- **Domain:** Ephemeral hostname on `*.trycloudflare.com`.
+### Tier 2: Protected Quick Tunnel Proof (CP-002 — Validated)
+- **Host:** Local developer workstation (Windows 11 / WSL2).
+- **Routing:** Ad-hoc Cloudflare Quick Tunnel pointing to loopback origin:
+  ```bash
+  cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail reviewer@example.com
+  ```
+- **Domain:** Ephemeral hostname on `*.trycloudflare.com` (changes on every restart).
 - **Access Boundary:** Cloudflare Access zero-trust application with email OTP allowlist.
 - **Purpose:** Proves the external authentication boundary and remote connectivity without incurring cloud hosting costs or provisioning server infrastructure.
 

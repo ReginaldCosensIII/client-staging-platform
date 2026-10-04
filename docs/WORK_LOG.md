@@ -90,4 +90,54 @@
   - Verified HTTP `200 OK` via `curl.exe -i http://127.0.0.1:8080`.
   - Verified container recreation via `docker compose down` and `docker compose up -d`, followed by re-verification.
   - Stopped container via `docker compose down`.
-- **Commit Hash:** `16ca4ab`
+- **Commit Hash:** `cb63d0e` (merged in baseline `a4fa6c2`)
+
+---
+
+## Checkpoint CP-002: Protected Local Cloudflare Quick Tunnel Proof
+
+- **Date:** 2026-10-04
+- **Branch:** `feat/cp-002-protected-quick-tunnel`
+- **Tooling & cloudflared Setup:**
+  - Initial check: `cloudflared` was not installed on host.
+  - Installed official Cloudflare Windows x64 binary (`cloudflared version 2026.9.3`, built 2026-09-24T08:31 UTC) from GitHub releases to `C:\Users\Regin\AppData\Local\Programs\cloudflared\cloudflared.exe`.
+  - Configured on User PATH and verified direct CLI invocation.
+  - Confirmed support for `--allowed-mail` flag via `cloudflared tunnel --help`.
+- **Local Origin Validation:**
+  - Started local test workload via `docker compose build` and `docker compose up -d`.
+  - Verified local container status: `staging-preview-test` running with port `127.0.0.1:8080->80/tcp`.
+  - Confirmed local HTTP response: `curl.exe -i http://127.0.0.1:8080` returned `HTTP/1.1 200 OK`.
+  - Confirmed host TCP listener: `Get-NetTCPConnection -LocalPort 8080` showed listener bound strictly to `127.0.0.1:8080` (no listener on `0.0.0.0` or `[::]`).
+- **Protected Quick Tunnel Startup:**
+  - Executed command: `cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail cesdeveloperservices@gmail.com`.
+  - First generated ephemeral hostname: `https://filled-jail-synopsis-mall.trycloudflare.com`.
+  - Confirmed tunnel connected via QUIC to Cloudflare Edge (iad10).
+  - Unauthenticated curl check verified `302 Found` redirecting to `https://login.trycloudflare.com/authorize`.
+- **Authorized Reviewer Validation (Human Project Lead):**
+  - Project lead opened `https://filled-jail-synopsis-mall.trycloudflare.com`.
+  - Cloudflare Access email challenge displayed.
+  - Entered approved email `cesdeveloperservices@gmail.com`.
+  - Received 6-digit One-Time PIN (OTP) in inbox.
+  - Submitted PIN; authentication succeeded.
+  - The `Client Staging Platform — Infrastructure Test` confirmation card was displayed.
+- **Unauthorized Reviewer Validation (Human Project Lead):**
+  - Project lead opened `https://filled-jail-synopsis-mall.trycloudflare.com` in an incognito window with a non-allowlisted email address.
+  - Access was blocked/denied at the Cloudflare edge (`broker assertion identity is not authorized`).
+  - Preview application content was never exposed.
+- **External Network Validation (Human Project Lead):**
+  - Project lead performed validation from an external mobile device over a cellular data network.
+  - Confirmed external end-to-end traversal: external browser -> Cloudflare edge Access -> outbound tunnel -> host loopback origin.
+- **Tunnel Shutdown Validation:**
+  - Terminated the `cloudflared` Quick Tunnel process.
+  - Queried `https://filled-jail-synopsis-mall.trycloudflare.com`; returned `HTTP/1.1 502 Bad Gateway` (ingress removed).
+  - Queried local origin: `curl.exe -I http://127.0.0.1:8080` returned `HTTP/1.1 200 OK` (local origin remained fully operational).
+- **Hostname Recreation Proof:**
+  - Started a second Quick Tunnel using identical parameters.
+  - Second generated ephemeral hostname: `https://hang-glass-each-ceo.trycloudflare.com`.
+  - Confirmed hostname differed from the first, empirically validating the temporary/ephemeral nature of Quick Tunnel URLs.
+  - Terminated the second tunnel process.
+- **Final Cleanup:**
+  - Stopped container via `docker compose down`.
+  - Verified `docker compose ps` shows no running containers.
+  - Verified `Get-Process cloudflared` shows no lingering background tunnel processes.
+- **Commit Hash:** `c25281c`

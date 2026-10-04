@@ -6,9 +6,21 @@ The primary objective of the Client Staging Platform is to enable client stakeho
 
 Security is designed into the platform architecture from the ground up through a zero-trust, edge-authenticated model.
 
-> [!WARNING]
-> **CP-001 Security Baseline:**
-> During CP-001, the system exists solely as a local workstation Docker workload. Cloudflare Access, email OTP policies, and edge tunnels are **NOT** active in CP-001. Those controls belong to CP-002 and subsequent deployment checkpoints.
+> [!NOTE]
+> **CP-002 Security Status (Validated):**
+> The external zero-trust boundary was empirically proven via a protected Cloudflare Quick Tunnel using email allowlisting and One-Time PIN (OTP) authentication.
+>
+> **Proven Security Properties:**
+> - The origin is strictly restricted to host loopback (`127.0.0.1:8080`); no external or LAN ports are exposed.
+> - External access flows exclusively through Cloudflare edge proxy via outbound encrypted tunnel.
+> - Pre-exposure authentication is enforced: unauthenticated visitors are challenged with email OTP.
+> - Only pre-approved emails can complete authentication; non-allowlisted emails are rejected with zero access to preview content.
+> - Terminating the `cloudflared` process immediately removes external ingress (502 Bad Gateway at edge).
+>
+> **Known Operational Limitations:**
+> - Quick Tunnels are intended for short testing/review windows; they provide no SLA or uptime guarantee.
+> - Hostnames are ephemeral (`*.trycloudflare.com`) and change each time a tunnel is recreated.
+> - Availability depends on the local `cloudflared` process remaining active. Permanent staging will eventually migrate to named tunnels on stable domains.
 
 ---
 

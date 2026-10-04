@@ -61,8 +61,8 @@ The project strictly follows a phased checkpoint model to validate each layer be
 
 | Checkpoint | Scope | Status |
 | :--- | :--- | :--- |
-| **CP-001** | **Repository & Local Development Foundation** — Lean repository structure, Git discipline, Docker Compose baseline, and framework-neutral static test workload. | **Active / Implemented** |
-| **CP-002** | **Protected Cloudflare Quick Tunnel Proof** — Evaluation and testing of `cloudflared` Quick Tunnel with Cloudflare Access email allowlisting/OTP. | Planned |
+| **CP-001** | **Repository & Local Development Foundation** — Lean repository structure, Git discipline, Docker Compose baseline, and framework-neutral static test workload. | **Completed** |
+| **CP-002** | **Protected Cloudflare Quick Tunnel Proof** — Evaluation and testing of `cloudflared` Quick Tunnel with Cloudflare Access email allowlisting/OTP. | **Completed / Validated** |
 | **CP-003** | **Remote MVP Host Deployment** — Provisioning and container execution on a temporary remote host (evaluating Google Cloud Compute Engine or equivalent). | Planned |
 | **CP-004** | **USAP Client Workload Integration** — Packaging and deploying the USAP preview workload onto the staging host. | Planned |
 | **CP-005+**| **Stable Domain & Named Tunnels** — Transitioning to custom branded domain and persistent Cloudflare Tunnels if needed. | Deferred |

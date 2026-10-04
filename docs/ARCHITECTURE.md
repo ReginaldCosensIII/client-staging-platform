@@ -41,9 +41,9 @@ Local developer workstation hosting a static verification container via Docker C
 
 ---
 
-### 2.2 CP-002: Protected Local Cloudflare Quick Tunnel Proof
+### 2.2 CP-002: Protected Local Cloudflare Quick Tunnel Proof (Validated)
 
-Validating the external zero-trust boundary without deploying cloud infrastructure. A local `cloudflared` process creates an outbound tunnel to Cloudflare Edge.
+Proven external zero-trust ingress without public cloud infrastructure or open inbound firewall ports. A local `cloudflared` process creates an outbound-only QUIC/HTTP2 tunnel connection to Cloudflare Edge.
 
 ```text
 +----------------------------+
@@ -58,20 +58,25 @@ Validating the external zero-trust boundary without deploying cloud infrastructu
 |  - Access Policy Shield    |
 +----------------------------+
                |
-               | Outbound Secure Tunnel
+               | Outbound Secure Tunnel (QUIC / TLS)
                v
-+----------------------------+
-| Local Workstation / Host   |
-|   +----------------------+ |
-|   | cloudflared daemon   | |
-|   +----------------------+ |
-|              | HTTP:8080   |
-|              v             |
-|   +----------------------+ |
-|   | preview-test (80)    | |
-|   +----------------------+ |
-+----------------------------+
++------------------------------------+
+| Local Workstation / Host           |
+|   +------------------------------+ |
+|   | cloudflared agent            | |
+|   +------------------------------+ |
+|                  | HTTP: 127.0.0.1:8080 (Loopback only)
+|                  v                 |
+|   +------------------------------+ |
+|   | preview-test (80)            | |
+|   +------------------------------+ |
++------------------------------------+
 ```
+
+**Key Validated Properties:**
+- **Zero Inbound Host Exposure:** No ports are exposed to the external internet or local LAN; Docker publishes exclusively to `127.0.0.1:8080`.
+- **Pre-Exposure Authentication:** Cloudflare Access intercepts all requests at the edge; visitors must submit an allowlisted email and enter a One-Time PIN before any connection reaches `cloudflared`.
+- **Ephemeral Testing Ingress:** Quick Tunnel hostnames are ephemeral (`*.trycloudflare.com`) and automatically decommissioned when the `cloudflared` process stops. This pattern is accepted for development/testing review windows, while stable named tunnels are deferred to the permanent platform architecture.
 
 ---
 
