@@ -16,29 +16,29 @@ Its immediate initial use case is providing authorized stakeholders of the Unite
 
 ## 2. Current Status & MVP Scope
 
-- **Current Status:** Foundation established (CP-001). A lightweight, framework-neutral static container workload verifies local Docker packaging, container execution, networking, and service lifecycle.
-- **Current MVP Objective:** Validate local development discipline, Docker Compose operations, and baseline repository documentation.
+- **Current Status:** CP-001 (Local Development Foundation) and CP-002 (Protected Cloudflare Quick Tunnel Proof) completed and validated.
+- **Current MVP Objective:** Prove the containerized local development foundation and zero-trust external access boundary via a protected Cloudflare Quick Tunnel using email One-Time PIN (OTP) allowlisting.
 - **Upcoming Phases:**
-  - **CP-002:** Protected Cloudflare Quick Tunnel proof with email one-time pin (OTP) allowlisting.
-  - **Later Checkpoints:** Remote MVP preview hosting (evaluating Google Cloud Compute Engine or comparable Docker-capable host) and packaging the actual client application.
+  - **CP-003:** Remote MVP preview hosting architecture & Google Cloud Compute Engine evaluation.
+  - **CP-004+:** Packaging and deploying client staging preview workloads (e.g., USAP website).
+  - **Future:** Named Cloudflare Tunnels and custom domain routing.
 
 > [!IMPORTANT]
 > **Boundary Notes:**
-> - **Separation from Client Code:** This repository is strictly decoupled from client application repositories (including `usap-website`). No client application code or CES Dev infrastructure is modified during CP-001.
-> - **Cloudflare Integration:** Tunnel and access policies belong strictly to CP-002 and subsequent checkpoints.
-> - **Remote Infrastructure:** Google Cloud Compute Engine is an evaluated temporary remote MVP host candidate, but is not a hard-coded architectural dependency. No remote cloud resources are provisioned in CP-001.
+> - **Separation from Client Code:** This repository is strictly decoupled from client application repositories (including `usap-website`).
+> - **Ephemeral Quick Tunnel Ingress:** The `*.trycloudflare.com` URL is an ad-hoc, temporary development/testing ingress; no permanent public endpoint or custom domain is active.
+> - **Remote Infrastructure:** Remote cloud VM hosting (Google Cloud Compute Engine or equivalent) belongs to CP-003+. No remote cloud resources are provisioned in CP-002.
 
 ---
 
 ## 3. Prerequisites
 
-To run and validate the local development environment, the host machine requires:
+To run and validate the local development environment and protected tunnel, the host machine requires:
 
 - **Git:** >= 2.40
 - **Docker:** Engine >= 24.0 (Docker Desktop or Linux Docker Engine)
 - **Docker Compose:** v2 or v5 plugin (`docker compose`)
-
-*(Note: `cloudflared` is an optional prerequisite reserved for CP-002; .NET SDK is not required for running the framework-neutral static test workload).*
+- **cloudflared:** Use a current `cloudflared` release that supports the `--allowed-mail` option (CP-002 was validated with `cloudflared 2026.9.3`).
 
 ---
 
@@ -82,9 +82,21 @@ http://localhost:8080
 ```
 
 The browser will display the **Client Staging Platform — Infrastructure Test** confirmation card indicating status: `Running` and environment: `Local`.
+Only the host loopback interface (`127.0.0.1`) can reach this port.
 
-### 4.4 Stopping the Workload
+### 4.4 Protected Quick Tunnel (External Preview Proof)
 
+To securely expose the local loopback origin to an external reviewer using Cloudflare Access email allowlisting:
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail reviewer@example.com
+```
+
+Cloudflare generates an ephemeral `https://*.trycloudflare.com` URL protected by email One-Time PIN (OTP). Unapproved visitors are blocked at the Cloudflare edge.
+
+### 4.5 Stopping the Workload
+
+To stop the tunnel, terminate the `cloudflared` process (`Ctrl+C`).
 To tear down the running container and its network:
 
 ```bash
@@ -105,5 +117,5 @@ Detailed architectural decisions, security boundaries, and roadmaps are organize
 - [Decision Log](file:///C:/Users/Regin/Source/repos/client-staging-platform/docs/DECISION_LOG.md) — Architectural Decision Records (ADRs).
 - [Work Log](file:///C:/Users/Regin/Source/repos/client-staging-platform/docs/WORK_LOG.md) — Chronological checkpoint implementation log.
 - [Docker Infrastructure](file:///C:/Users/Regin/Source/repos/client-staging-platform/infrastructure/docker/README.md) — Docker container baseline and Compose specs.
-- [Cloudflare Infrastructure](file:///C:/Users/Regin/Source/repos/client-staging-platform/infrastructure/cloudflare/README.md) — CP-002 forward-looking specifications.
+- [Cloudflare Infrastructure](file:///C:/Users/Regin/Source/repos/client-staging-platform/infrastructure/cloudflare/README.md) — Protected Quick Tunnel operations guide and specifications.
 - [Scripts](file:///C:/Users/Regin/Source/repos/client-staging-platform/scripts/README.md) — Scripts directory policy.

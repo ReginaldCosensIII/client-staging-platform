@@ -118,3 +118,28 @@ This log documents all major architectural and operational decisions accepted fo
 - **Context:** It is tempting to immediately try to containerize the USAP website and configure staging concurrently.
 - **Decision:** Prove the infrastructure, Docker Compose lifecycle, and tunnel mechanics first using a trivial static test container before integrating the real client application.
 - **Consequences:** Decouples infrastructure debugging from application-level debugging, preventing confusing failure modes.
+
+---
+
+### ADR-014: Protected Cloudflare Quick Tunnel Validated for Initial MVP Ingress
+- **Date:** 2026-10-04
+- **Status:** Accepted (Validated in CP-002)
+- **Context:** An external ingress mechanism is required to allow remote client stakeholders to review preview builds securely without public cloud provisioning or DNS complexity.
+- **Decision:** Validate and adopt Protected Cloudflare Quick Tunnels (`cloudflared tunnel --allowed-mail ...`) as the initial testing and MVP ingress pattern.
+- **Rationale:**
+  - $0 operational cost for temporary staging access.
+  - Requires no Cloudflare account or API credentials.
+  - Requires no custom domain or DNS modifications during testing phases.
+  - Enforces edge email allowlisting with One-Time PIN (OTP) verification.
+  - Suitable for scheduled, human-in-the-loop stakeholder review sessions.
+  - Explicitly recognized as non-permanent: not accepted as permanent production/staging ingress.
+- **Consequences:** Provides an immediate, zero-cost, zero-trust review workflow. Permanent custom domains and persistent named tunnels remain deferred to future multi-tenant platform milestones.
+
+---
+
+### ADR-015: Strict Host Loopback Binding Preserved Across Ingress Layers
+- **Date:** 2026-10-04
+- **Status:** Accepted (Validated in CP-001R1 & CP-002)
+- **Context:** Workload container ports could inadvertently be published across `0.0.0.0` or local network interfaces when adding tunnel connectors.
+- **Decision:** Enforce that container ports bind strictly to host loopback (`127.0.0.1:8080`) on both local workstations and future remote preview hosts.
+- **Consequences:** Prevents accidental LAN or direct public IP exposure. All external traffic must transit through the authorized edge authentication layer.
