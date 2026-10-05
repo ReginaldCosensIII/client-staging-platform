@@ -5,7 +5,7 @@
 This directory is reserved for repeatable setup, maintenance, and deployment scripts when justified by operational need in future checkpoints.
 
 In adherence to lean architectural discipline:
-- **No Premature Automation:** No wrapper scripts (e.g. bash or PowerShell scripts merely wrapping standard `docker compose` commands) are added during CP-001. Standard CLI commands are documented directly in the root `README.md` and `infrastructure/docker/README.md`.
+- **No Premature Automation:** Provisioning and hardening of the Remote Preview Host during CP-003 and CP-004 were intentionally executed manually as an infrastructure proof. No fragile wrapper scripts were introduced merely to wrap standard package managers or `docker compose` commands.
 - **Future Candidate Scripts:**
-  - Remote host initialization script (Docker & `cloudflared` bootstrap for Linux VMs in CP-003+).
+  - Repeatable host bootstrap automation (e.g., cloud-init or shell provisioning for multi-host scaling in future phases).
   - Workload staging refresh helper scripts.

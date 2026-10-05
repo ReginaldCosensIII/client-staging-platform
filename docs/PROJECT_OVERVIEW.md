@@ -51,7 +51,7 @@ To allow swift delivery for the USAP milestone while protecting future multi-cli
 
 The overarching success condition for the platform MVP is:
 
-> **An authorized client stakeholder can open a secure HTTPS staging URL from a normal browser, authenticate using an approved email address and one-time code (OTP), and review the actual client application while unauthorized visitors cannot access it.**
+> **An authorized client stakeholder can open a secure HTTPS staging URL from a normal browser, authenticate using an approved email address and one-time code (OTP), and review the actual client application running on a remote preview host, while unauthorized visitors cannot access it and the origin server exposes no public application ports.**
 
 ---
 
@@ -62,26 +62,33 @@ The project strictly follows a phased checkpoint model to validate each layer be
 | Checkpoint | Scope | Status |
 | :--- | :--- | :--- |
 | **CP-001** | **Repository & Local Development Foundation** — Lean repository structure, Git discipline, Docker Compose baseline, and framework-neutral static test workload. | **Completed** |
-| **CP-002** | **Protected Cloudflare Quick Tunnel Proof** — Evaluation and testing of `cloudflared` Quick Tunnel with Cloudflare Access email allowlisting/OTP. | **Completed / Validated** |
-| **CP-003** | **Remote MVP Host Deployment** — Provisioning and container execution on a temporary remote host (evaluating Google Cloud Compute Engine or equivalent). | Planned |
-| **CP-004** | **USAP Client Workload Integration** — Packaging and deploying the USAP preview workload onto the staging host. | Planned |
-| **CP-005+**| **Stable Domain & Named Tunnels** — Transitioning to custom branded domain and persistent Cloudflare Tunnels if needed. | Deferred |
+| **CP-001R1**| **Localhost Binding Hardening** — Explicit loopback (`127.0.0.1`) host binding repair to eliminate LAN exposure. | **Completed** |
+| **CP-002** | **Protected Local Cloudflare Quick Tunnel Proof** — Evaluation and testing of `cloudflared` Quick Tunnel with Cloudflare Access email allowlisting/OTP on local host. | **Completed / Validated** |
+| **CP-002R1**| **cloudflared Installation & Version Normalization** — Binary path deduplication and documentation version floor correction. | **Completed** |
+| **CP-003** | **Remote Preview Host Provisioning** — Provisioning of remote Linux host (DigitalOcean Droplet `client-staging-01`, Ubuntu 24.04 LTS, SSH hardening, swap, Docker, cloudflared). | **Completed / Validated** |
+| **CP-004** | **Remote Protected Preview Infrastructure Proof** — Remote validation of loopback origin, Cloud Firewall, direct-IP negative proof, protected Quick Tunnel OTP authentication, and clean teardown. | **Completed / Validated** |
+| **CP-004R1**| **Remote Host Documentation & Infrastructure Baseline Reconciliation** — Align repository documentation with proven DigitalOcean remote host baseline while maintaining provider-neutral architecture. | **Current Checkpoint** |
+| **CP-005** | **USAP Client Workload Integration** — Packaging and deploying the USAP client web application preview onto the remote staging host. | Planned Next |
+| **CP-006+**| **Stable Domain & Named Tunnels** — Transitioning to custom branded domain (`preview.example.com`), persistent named Cloudflare Tunnels, and background systemd service management. | Deferred |
 
 ---
 
-## 7. Current CP-001 Scope & Exclusions
+## 7. Current Architecture & Provider Implementation
 
-### In Scope for CP-001
-- Clean, provider-neutral repository structure.
-- Docker Compose configuration and framework-neutral static container workload.
-- Comprehensive foundational architecture, security, deployment, and branding documentation.
-- Rigorous local lifecycle validation (`build`, `up -d`, `ps`, HTTP response, `down`, recreation).
+### 7.1 Proven Remote Architecture
+The platform has proven the end-to-end remote preview workflow:
+1. **Remote Preview Host:** Dedicated Linux compute instance with inbound traffic restricted by cloud firewall strictly to SSH (TCP 22). No public application ports (80, 443, 8080) are open.
+2. **Private Origin Isolation:** The preview workload runs inside Docker, published strictly to the host loopback interface (`127.0.0.1:8080`). Direct requests to the host public IP time out.
+3. **Protected Quick Tunnel:** An on-demand `cloudflared` process creates an outbound encrypted tunnel to the Cloudflare Edge using `--allowed-mail`.
+4. **Edge Zero-Trust Challenge:** Cloudflare Access intercepts incoming HTTPS requests, challenging visitors for an allowlisted email and 6-digit One-Time PIN (OTP). Unauthorized users receive a 403 Forbidden response and never reach the origin.
+5. **Independent Teardown:** Terminating the tunnel process immediately revokes external access (edge returns Cloudflare 530) while the private application origin remains healthy.
 
-### Explicit Exclusions for CP-001
-- No Cloudflare account, tunnel, or access configuration.
-- No Google Cloud provisioning, billing, or resource creation.
-- No public DNS or custom domain changes.
-- No custom authentication, user tables, or passwords.
-- No platform database (no EF Core, PostgreSQL, etc.).
-- No client application source code imported or modified.
-- No automated deployment pipelines or CI/CD actions.
+### 7.2 Current Provider Implementation
+- **Remote Host Provider:** DigitalOcean (Project: `client-staging-platform`, Region: NYC1, Droplet: `client-staging-01`).
+- **Provider Portability:** The platform maintains a provider-neutral abstraction. The current reference deployment runs on a 1 vCPU / 1 GB RAM DigitalOcean Droplet ($6/month tier). The architecture retains complete portability to Google Cloud Compute Engine, other cloud VPS providers, or on-premises servers without modifying container configurations.
+
+### 7.3 Scope Exclusions for Current Platform Baseline
+- **No Client Application Source:** This repository does not store or build the USAP website source code. USAP integration occurs in CP-005 via container deployment.
+- **No Permanent Named Tunnels or Custom DNS:** Named Cloudflare Tunnels and custom domains (`preview.example.com`) remain deferred to CP-006+.
+- **No Platform Database:** Staging authentication is handled entirely at the edge; no database is deployed or required.
+- **No Background System Service for Tunnel:** The MVP relies on manually initiated Quick Tunnels for scheduled stakeholder review windows.

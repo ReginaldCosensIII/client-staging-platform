@@ -171,4 +171,110 @@
   - Terminated Quick Tunnel process.
   - Stopped Docker container via `docker compose down`.
   - Confirmed zero project containers and zero lingering `cloudflared` processes.
-- **Commit Hash:** `acb48a2`
+- **Commit Hash:** `dc2d8b0` (merged baseline `e0117e2`)
+
+---
+
+## Checkpoint CP-003: Remote Preview Host Provisioning
+
+- **Date:** 2026-10-05
+- **Execution Mode:** Interactive manual infrastructure provisioning & hardening
+- **Provider & Project Setup:**
+  - Created DigitalOcean project: `client-staging-platform` (Environment: Staging, Purpose: Operational / Developer tooling).
+  - Provisioned Droplet: `client-staging-01` in data center region `NYC1` (New York 1).
+  - Plan: Basic / Shared CPU / Regular Intel or AMD (1 vCPU, 1 GB RAM, 25 GB SSD, 1000 GB transfer; maximum advertised compute price: $6/month, ~$0.009/hour).
+  - Droplet features configured: Improved Metrics & Monitoring enabled; automated backups disabled; additional block storage none; public IPv4 enabled; public IPv6 disabled; tags: `client-staging`, `staging`.
+  - Regional note: NYC1 selected because the $6 Basic plan was unavailable in Richmond at provisioning time; not an architectural requirement.
+- **Administrative User & SSH Hardening:**
+  - Created dedicated non-root administrator: `stagingadmin`.
+  - Configured SSH public-key authentication for `stagingadmin`; added to `sudo` and `docker` groups.
+  - Hardened SSH configuration (`/etc/ssh/sshd_config`):
+    - `PermitRootLogin no`
+    - `PubkeyAuthentication yes`
+    - `PasswordAuthentication no`
+  - Validated post-hardening SSH: root SSH connection explicitly rejected with `Permission denied (publickey)`. Fresh `stagingadmin` key-based SSH session succeeded.
+- **Cloud Firewall Baseline:**
+  - Created DigitalOcean Cloud Firewall: `client-staging-ssh-only`.
+  - Inbound rules: TCP 22 (SSH) allowed from all IPv4 addresses.
+  - Web & application ports: 80, 443, 8080, 5000, 5001, etc., strictly prohibited and closed at cloud perimeter.
+  - Outbound rules: Unrestricted outbound access.
+- **Operating System Baseline & Patching:**
+  - Updated Ubuntu packages to Ubuntu 24.04.5 LTS x64 (Kernel `6.8.0-146-generic`).
+  - Pending immediate updates: 0.
+  - Maintained LTS channel policy; declined non-LTS upgrade suggestions (`do-release-upgrade`).
+- **Memory & Swap Configuration:**
+  - Host provisioned with 0 swap. Configured persistent 1.0 GiB swapfile at `/swapfile` (`chmod 600`, `mkswap`, `swapon`).
+  - Added persistent entry to `/etc/fstab`: `/swapfile none swap sw 0 0`.
+  - Verified swap active (1.0 GiB) and confirmed persistence across host reboot.
+  - Purpose: Provides memory buffer against OOM crashes during container operations on the 1 GB VPS without substituting physical RAM.
+- **Docker Installation:**
+  - Installed Docker Engine 29.8.2 and Docker Compose plugin 5.6.0 (`containerd` 2.3.6, Buildx) from Docker's official Ubuntu repository (`download.docker.com`).
+  - Verified service active and enabled (`systemctl status docker`).
+  - Verified non-root container management under `stagingadmin` (`docker ps`, `docker run --rm hello-world`).
+  - Noted security policy: `docker` group membership conveys root-equivalent privileges.
+- **cloudflared Installation:**
+  - Installed `cloudflared 2026.9.3` from Cloudflare's official package repository (`/usr/bin/cloudflared`, symlinked to `/usr/local/bin/cloudflared`).
+  - Verified `--allowed-mail` flag availability for protected Quick Tunnels.
+  - Intentionally omitted persistent `cloudflared.service` systemd daemon for manual MVP review model.
+
+---
+
+## Checkpoint CP-004: Remote Protected Preview Infrastructure Proof
+
+- **Date:** 2026-10-05
+- **Execution Mode:** Interactive manual validation & testing on remote host
+- **Workload Execution & Local Origin Isolation:**
+  - Ran static infrastructure test container (`examples/preview-test`, `nginx:alpine`) via `docker compose up -d`.
+  - Verified container running: `docker compose ps` showed `127.0.0.1:8080->80/tcp`.
+  - Verified local TCP socket listener: `sudo ss -ltnp | grep 8080` confirmed listener strictly on `127.0.0.1:8080` (no listener on `0.0.0.0` or public interface).
+  - Verified local HTTP response: `curl -I http://127.0.0.1:8080` returned `HTTP/1.1 200 OK`.
+- **Direct-Origin Negative Proof:**
+  - From external machine, attempted direct HTTP request: `curl -I --connect-timeout 5 http://<DROPLET_PUBLIC_IP>:8080`.
+  - Result: Connection timed out. Proved origin is not directly exposed through VPS public IP.
+- **Protected Quick Tunnel Startup:**
+  - Executed command: `cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail <APPROVED_REVIEWER_EMAIL>`.
+  - Pre-checks succeeded: DNS resolution, QUIC / UDP connectivity, HTTP/2 / TCP fallback, Cloudflare API reachability.
+  - Transport protocol: QUIC selected as primary.
+  - Cloudflare advertised: `Authentication: One-Time PIN (using Cloudflare Access)`, `Allowed recipients: 1 address`, `Local origin: http://127.0.0.1:8080`.
+  - Temporary URL generated: dynamic `*.trycloudflare.com` hostname.
+  - Non-blocking warnings observed: ICMP ping group range warning and QUIC receive buffer size limit (both benign; connectivity and auth unaffected).
+- **Authorized Reviewer Validation:**
+  - Navigated to temporary URL. Cloudflare Access login challenge displayed.
+  - Entered `<APPROVED_REVIEWER_EMAIL>`. Received 6-digit OTP in email inbox.
+  - Submitted OTP; authentication succeeded. Preview confirmation card rendered correctly in browser.
+- **Unauthorized Reviewer Validation:**
+  - Attempted access using non-allowlisted email (`<UNAPPROVED_EMAIL>`).
+  - Cloudflare Access rejected request at edge: HTTP `403 Forbidden` (`broker assertion identity is not authorized`).
+  - `cloudflared` logged: `HTTP request authorization failed before origin selection` with unauthorized identity.
+  - Zero origin application traffic exposed.
+- **Direct Negative Test During Active Tunnel:**
+  - While tunnel was actively serving authorized preview traffic, attempted direct external access to `http://<DROPLET_PUBLIC_IP>:8080`.
+  - Result: Connection timed out. Proved tunnel does not compromise origin isolation.
+- **Tunnel Teardown & Independent Origin Verification:**
+  - Terminated `cloudflared` process via `Ctrl+C`.
+  - External request to temporary URL returned Cloudflare `HTTP 530` / error.
+  - Queried local origin on host: `curl -I http://127.0.0.1:8080` returned `HTTP/1.1 200 OK`. Proved external access can be severed independently of running workload.
+- **Hostname Recreation Proof:**
+  - Launched second Quick Tunnel with identical parameters.
+  - Generated second temporary `*.trycloudflare.com` URL. Confirmed URL differed from the first, empirically validating ephemeral process-based lifecycle. Terminated second tunnel.
+- **Workload Cleanup:**
+  - Executed `docker compose down`. Verified zero running containers via `docker compose ps`.
+
+---
+
+## Checkpoint CP-004R1: Remote Host Documentation & Infrastructure Baseline Reconciliation
+
+- **Date:** 2026-10-05
+- **Branch:** `feat/cp-004-remote-preview-proof`
+- **Scope of Reconciliation:**
+  - Reconciled repository documentation with the proven DigitalOcean Remote Preview Host (`client-staging-01`) baseline while maintaining provider-neutral architecture.
+  - Created `docs/REMOTE_HOST_BASELINE.md` documenting full technical specifications: DigitalOcean Droplet, Ubuntu 24.04 LTS, 1 GB swapfile, SSH hardening, Cloud Firewall, Docker Engine 29.8.2, and `cloudflared 2026.9.3`.
+  - Updated `README.md` to reflect completed CP-001 through CP-004 milestones and provide clear remote architecture flow.
+  - Updated `docs/PROJECT_OVERVIEW.md` with current checkpoint status, provider implementation, and next milestone (CP-005: USAP Integration).
+  - Updated `docs/ARCHITECTURE.md` with comprehensive proven remote architecture diagram, direct-origin prohibition, and boundary definitions.
+  - Updated `docs/SECURITY.md` documenting SSH hardening, cloud firewall, docker group privileges, and non-public origin isolation principle.
+  - Updated `docs/DEPLOYMENT.md` as an end-to-end operational runbook for remote staging sessions, including teardown, cost/billing lifecycle, and provider portability.
+  - Updated `infrastructure/docker/README.md` and `infrastructure/cloudflare/README.md` with remote host operational guidelines, loopback requirements, and observed non-blocking warnings.
+  - Updated `scripts/README.md` noting manual CP-003/CP-004 infrastructure proof.
+  - Added ADR-016 through ADR-026 to `docs/DECISION_LOG.md` recording all architectural and operational decisions accepted during CP-003 and CP-004.
+  - Audited all files for secrets, private keys, passwords, live reviewer emails, live URLs, and raw public IP addresses.
