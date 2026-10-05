@@ -51,6 +51,15 @@ The Remote Preview Host runs the official Docker distribution installed via Dock
   - Framework-neutral static container using `nginx:alpine`.
   - Serves a lightweight HTML confirmation card displaying platform status and environment.
   - Used in CP-001, CP-002, CP-003, and CP-004 to empirically validate container lifecycle, port binding, HTTP serving, restartability, and tunnel endpoints.
+  - *Remote Acceptance Proof Execution (CP-004):* On the remote preview host, the acceptance test workload was launched directly using `docker run`:
+    ```bash
+    docker run -d \
+      --name preview-test \
+      --restart no \
+      -p 127.0.0.1:8080:80 \
+      nginx:alpine
+    ```
+    This verified direct loopback-only publishing (`127.0.0.1:8080`) and isolated origin serving without relying on Compose orchestration.
 - **Client Application Workloads (CP-005: USAP Website):**
   - In CP-005, the platform will package and deploy the actual USAP client application preview container.
   - Client application source code remains decoupled in its dedicated repository (`usap-website`).
@@ -60,7 +69,7 @@ The Remote Preview Host runs the official Docker distribution installed via Dock
 
 ## 5. Standard Docker Operations
 
-All container management on both local and remote hosts is executed via standard Docker Compose commands:
+While the specific CP-004 remote proof was executed directly via `docker run` above, the platform supports standard Docker Compose commands for managing local environments and multi-container preview stacks:
 
 ```bash
 # 1. Validate docker-compose.yml syntax and variable substitution

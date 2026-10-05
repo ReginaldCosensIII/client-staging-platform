@@ -11,13 +11,13 @@ Tier 2: Protected Local Quick Tunnel Proof (CP-002 / CP-002R1)
    ↓
 Tier 3: Remote Preview Host & Infrastructure Proof (CP-003 / CP-004 — Current Proven Baseline)
    ↓
-Tier 4: Stable Multi-Tenant Platform & Custom Domains (CP-006+ — Long-Term Future)
+Tier 4: Stable Multi-Tenant Platform & Custom Domains (Candidate Long-Term Direction)
 ```
 
 - **Tier 1 (Local Development):** Local workstation running containerized workload via Docker Compose bound strictly to IPv4 loopback (`127.0.0.1:8080`).
 - **Tier 2 (Protected Local Tunnel):** Workstation loopback origin exposed externally via an ad-hoc protected Quick Tunnel (`cloudflared tunnel --allowed-mail`).
 - **Tier 3 (Remote Preview Host):** Remote Linux compute instance (currently reference-implemented on DigitalOcean Droplet `client-staging-01`) hosting containerized preview workloads behind cloud firewall and loopback origin, exposed to reviewers via protected Quick Tunnel.
-- **Tier 4 (Stable Multi-Tenant Platform):** Long-term architecture featuring persistent named Cloudflare Tunnels, custom branded domains (`preview.example.com`), and systemd-managed daemons.
+- **Tier 4 (Candidate Long-Term Direction):** A later production-style evolution may use named Cloudflare Tunnels, custom branded domains (`preview.example.com`), and systemd-managed daemons if justified by project needs.
 
 ---
 
@@ -53,14 +53,17 @@ ssh stagingadmin@<DROPLET_PUBLIC_IP>
 
 ### Step 2: Start the Private Origin Workload
 
-Navigate to the platform workspace directory and start the preview container in detached mode:
+For the CP-004 remote infrastructure proof, the origin workload was launched directly using `docker run` with loopback-only publishing:
 
 ```bash
-cd /path/to/client-staging-platform
-docker compose up -d
+docker run -d \
+  --name preview-test \
+  --restart no \
+  -p 127.0.0.1:8080:80 \
+  nginx:alpine
 ```
 
-*(Note: The current test workload is `examples/preview-test` using `nginx:alpine` to prove infrastructure. In CP-005, this will be replaced with or accompanied by the packaged USAP client application).*
+*(Note: The platform also supports Docker Compose (`docker compose up -d`) for managing multi-container stacks. In CP-005, the origin will host the packaged USAP client application).*
 
 ---
 
@@ -70,8 +73,8 @@ Verify that the workload is running, published strictly to the host loopback int
 
 ```bash
 # 1. Verify container status and port mapping
-docker compose ps
-# Expected output shows: 127.0.0.1:8080->80/tcp
+docker ps
+# Expected output shows: preview-test with 127.0.0.1:8080->80/tcp
 
 # 2. Inspect local TCP socket listeners
 sudo ss -ltnp | grep 8080
@@ -137,9 +140,11 @@ cloudflared tunnel \
 1. Reviewer navigates to `https://<random-words>.trycloudflare.com`.
 2. Cloudflare Access login screen displays, requesting an email address.
 3. Reviewer enters `<APPROVED_REVIEWER_EMAIL>`.
-4. Cloudflare sends a 6-digit cryptographic One-Time PIN (OTP) to the user's inbox.
+4. Cloudflare sends a Cloudflare Access one-time PIN (OTP) to the user's inbox.
 5. Reviewer enters the OTP; Cloudflare sets an authenticated session cookie and routes requests through the tunnel.
-6. The preview application renders successfully in the reviewer's browser.
+6. The user successfully reaches the protected nginx origin page (`Welcome to nginx!`).
+
+*(Note on Verification: An earlier test produced an unexpected intermediate Cloudflare login page, but a subsequent clean retest successfully reached the nginx origin page and represents the final verified acceptance result).*
 
 #### B. Unauthorized Reviewer Flow:
 1. Visitor navigates to `https://<random-words>.trycloudflare.com`.
@@ -173,13 +178,15 @@ Press Ctrl+C in the terminal running cloudflared
 When the preview workload is no longer needed:
 
 ```bash
-docker compose down
+docker stop preview-test && docker rm preview-test
+# Or when using Compose:
+# docker compose down
 ```
 
 Verify that no containers remain running:
 
 ```bash
-docker compose ps
+docker ps
 ```
 
 ---
@@ -188,7 +195,7 @@ docker compose ps
 
 - **Ephemeral Hostnames:** Quick Tunnel URLs (`https://*.trycloudflare.com`) are generated dynamically upon each process launch. Terminating and restarting `cloudflared` generates a new random URL.
 - **Session Lifespan:** External review is available only while the `cloudflared` command is actively running in a terminal or managed screen/tmux session. No persistent `cloudflared.service` is installed for the MVP.
-- **No Service Level Agreement (SLA):** Quick Tunnels are designed for on-demand stakeholder testing and review windows. Permanent hosting will transition to named tunnels in CP-006+.
+- **No Service Level Agreement (SLA):** Quick Tunnels are designed for on-demand stakeholder testing and review windows. A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs.
 
 ---
 

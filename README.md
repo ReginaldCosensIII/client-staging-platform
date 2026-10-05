@@ -2,7 +2,7 @@
 
 > **Working / Product Concept:** Version III Client Preview & Staging Portal
 > **Repository:** `client-staging-platform`
-> **Current Checkpoint:** CP-004R1 — Remote Host Documentation & Infrastructure Baseline Reconciliation
+> **Current Checkpoint:** CP-004R2 — Remote Preview Documentation Accuracy Repair
 
 ---
 
@@ -21,12 +21,13 @@ Its immediate initial use case is providing authorized stakeholders of the Unite
   - **CP-002 / CP-002R1:** Protected Local Cloudflare Quick Tunnel Proof completed and validated.
   - **CP-003:** Remote Preview Host Provisioning (DigitalOcean Droplet `client-staging-01`, Ubuntu 24.04 LTS, SSH hardening, Docker, cloudflared) completed and validated.
   - **CP-004:** Remote Protected Preview Infrastructure Proof (loopback-only origin, direct-IP negative test, email OTP allowlisting, tunnel teardown) completed and validated.
-  - **CP-004R1 (Current):** Remote Host Documentation & Infrastructure Baseline Reconciliation.
+  - **CP-004R1:** Remote Host Documentation & Infrastructure Baseline Reconciliation completed.
+  - **CP-004R2 (Current):** Remote Preview Documentation Accuracy Repair.
 - **Current MVP Objective:** Provide an on-demand, zero-trust external review pathway for containerized client previews running on an isolated Remote Preview Host, protected by Cloudflare Access email One-Time PIN (OTP) authentication.
 - **Next Milestone:**
   - **CP-005:** USAP Preview Deployment Integration (packaging and deploying the USAP client web application preview onto the remote staging host).
-- **Future Platform Milestones:**
-  - **CP-006+:** Named Cloudflare Tunnels, custom branded domain routing (`preview.example.com`), and persistent systemd service management.
+- **Future Platform Evolution (Candidate Direction):**
+  - A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs.
 
 > [!IMPORTANT]
 > **Architectural & Boundary Notes:**

@@ -67,9 +67,10 @@ The project strictly follows a phased checkpoint model to validate each layer be
 | **CP-002R1**| **cloudflared Installation & Version Normalization** — Binary path deduplication and documentation version floor correction. | **Completed** |
 | **CP-003** | **Remote Preview Host Provisioning** — Provisioning of remote Linux host (DigitalOcean Droplet `client-staging-01`, Ubuntu 24.04 LTS, SSH hardening, swap, Docker, cloudflared). | **Completed / Validated** |
 | **CP-004** | **Remote Protected Preview Infrastructure Proof** — Remote validation of loopback origin, Cloud Firewall, direct-IP negative proof, protected Quick Tunnel OTP authentication, and clean teardown. | **Completed / Validated** |
-| **CP-004R1**| **Remote Host Documentation & Infrastructure Baseline Reconciliation** — Align repository documentation with proven DigitalOcean remote host baseline while maintaining provider-neutral architecture. | **Current Checkpoint** |
+| **CP-004R1**| **Remote Host Documentation & Infrastructure Baseline Reconciliation** — Align repository documentation with proven DigitalOcean remote host baseline while maintaining provider-neutral architecture. | **Completed** |
+| **CP-004R2**| **Remote Preview Documentation Accuracy Repair** — Correct authorized reviewer acceptance evidence, Docker execution wording, OTP language, and roadmap certainty. | **Current Checkpoint** |
 | **CP-005** | **USAP Client Workload Integration** — Packaging and deploying the USAP client web application preview onto the remote staging host. | Planned Next |
-| **CP-006+**| **Stable Domain & Named Tunnels** — Transitioning to custom branded domain (`preview.example.com`), persistent named Cloudflare Tunnels, and background systemd service management. | Deferred |
+| **Future** | **Stable Domain & Named Tunnels (Candidate Direction)** — A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs. | Deferred |
 
 ---
 
@@ -78,9 +79,9 @@ The project strictly follows a phased checkpoint model to validate each layer be
 ### 7.1 Proven Remote Architecture
 The platform has proven the end-to-end remote preview workflow:
 1. **Remote Preview Host:** Dedicated Linux compute instance with inbound traffic restricted by cloud firewall strictly to SSH (TCP 22). No public application ports (80, 443, 8080) are open.
-2. **Private Origin Isolation:** The preview workload runs inside Docker, published strictly to the host loopback interface (`127.0.0.1:8080`). Direct requests to the host public IP time out.
+2. **Private Origin Isolation:** The preview workload runs inside Docker (validated via loopback-published `docker run`), published strictly to the host loopback interface (`127.0.0.1:8080`). Direct requests to the host public IP time out.
 3. **Protected Quick Tunnel:** An on-demand `cloudflared` process creates an outbound encrypted tunnel to the Cloudflare Edge using `--allowed-mail`.
-4. **Edge Zero-Trust Challenge:** Cloudflare Access intercepts incoming HTTPS requests, challenging visitors for an allowlisted email and 6-digit One-Time PIN (OTP). Unauthorized users receive a 403 Forbidden response and never reach the origin.
+4. **Edge Zero-Trust Challenge:** Cloudflare Access intercepts incoming HTTPS requests, challenging visitors for an allowlisted email and Cloudflare Access one-time PIN (OTP). Unauthorized users receive a 403 Forbidden response and never reach the origin.
 5. **Independent Teardown:** Terminating the tunnel process immediately revokes external access (edge returns Cloudflare 530) while the private application origin remains healthy.
 
 ### 7.2 Current Provider Implementation
@@ -89,6 +90,6 @@ The platform has proven the end-to-end remote preview workflow:
 
 ### 7.3 Scope Exclusions for Current Platform Baseline
 - **No Client Application Source:** This repository does not store or build the USAP website source code. USAP integration occurs in CP-005 via container deployment.
-- **No Permanent Named Tunnels or Custom DNS:** Named Cloudflare Tunnels and custom domains (`preview.example.com`) remain deferred to CP-006+.
+- **No Permanent Named Tunnels or Custom DNS:** A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs. These remain deferred during current MVP phases.
 - **No Platform Database:** Staging authentication is handled entirely at the edge; no database is deployed or required.
 - **No Background System Service for Tunnel:** The MVP relies on manually initiated Quick Tunnels for scheduled stakeholder review windows.

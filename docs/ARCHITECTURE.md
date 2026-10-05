@@ -114,7 +114,7 @@ PROVEN REMOTE PREVIEW ARCHITECTURE (CP-003 / CP-004)
 │   Docker Engine (v29.8.2)                                                       │
 │   ┌───────────────────────────────────────────────────────────┐                 │
 │   │ preview-test container (nginx:alpine, port 80)            │                 │
-│   │ Published exclusively to 127.0.0.1:8080:80                │                 │
+│   │ Launched via: docker run -d -p 127.0.0.1:8080:80 ...      │                 │
 │   │ (Future: USAP Client Application Container in CP-005)     │                 │
 │   └───────────────────────────────────────────────────────────┘                 │
 +─────────────────────────────────────────────────────────────────────────────────+
@@ -132,15 +132,15 @@ PROVEN REMOTE PREVIEW ARCHITECTURE (CP-003 / CP-004)
 **Key Validated Properties:**
 - **Zero Inbound App Exposure:** The host firewall permits ONLY inbound SSH (TCP 22). No web traffic ports (80, 443, 8080) are open to the internet.
 - **Strict Loopback Binding:** The container engine publishes ports strictly to `127.0.0.1:8080`. Even within the host, external network adapters cannot reach the container.
-- **Edge Authentication Precedes Access:** Cloudflare Access challenges all visitors for allowlisted email and OTP before proxying traffic.
+- **Edge Authentication Precedes Access:** Cloudflare Access challenges all visitors for allowlisted email and Cloudflare Access one-time PIN (OTP) before proxying traffic.
 - **Direct-Origin Negative Proof:** Direct requests to `http://<DROPLET_PUBLIC_IP>:8080` time out, proving origin isolation independently of Cloudflare.
 - **Independent Teardown:** Terminating `cloudflared` (`Ctrl+C`) immediately severs external ingress (edge returns Cloudflare 530) while the local Docker origin remains healthy and running.
 
 ---
 
-### 2.4 Future Platform Evolution: Named Tunnels & Custom Domains (CP-006+)
+### 2.4 Future Platform Evolution: Named Tunnels & Custom Domains (Candidate Direction)
 
-Long-term, multi-tenant staging architecture featuring persistent named Cloudflare Tunnels, custom branded domains, and background systemd service orchestration.
+A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs. The diagram below illustrates this potential long-term direction:
 
 ```text
 +───────────────────────────────────+
@@ -187,13 +187,13 @@ Long-term, multi-tenant staging architecture featuring persistent named Cloudfla
 - **Outbound Connectivity:** Unrestricted outbound access allows the host to connect outbound to Cloudflare Edge servers (QUIC/UDP 7844 or HTTPS/TCP 443) and APT repositories.
 
 ### 3.3 Docker Container Boundary
-- **Runtime:** Docker Engine 29.8.2 and Docker Compose plugin 5.6.0 installed from official Docker APT repositories.
+- **Runtime:** Docker Engine 29.8.2 and Docker Compose plugin 5.6.0 installed from official Docker APT repositories. The remote proof workload was launched using a direct `docker run` command with loopback binding (`-p 127.0.0.1:8080:80`), with Compose supported across the platform.
 - **Port Binding:** Container ports bind strictly to host loopback (`127.0.0.1:8080:80`). Binding to `0.0.0.0` is strictly prohibited.
 - **Docker Privilege Implications:** Administrative membership in the `docker` group grants root-equivalent control over the host. This privilege is restricted to the trusted `stagingadmin` administrative account.
 
 ### 3.4 Ingress & Access Boundary (Protected Quick Tunnel)
 - **Tooling:** Official `cloudflared` binary (v2026.9.3) at `/usr/bin/cloudflared` (symlinked from `/usr/local/bin/cloudflared`).
-- **Access Policy:** Initiated with `--allowed-mail <APPROVED_REVIEWER_EMAIL>`. Cloudflare Access enforces email validation and 6-digit OTP issuance.
+- **Access Policy:** Initiated with `--allowed-mail <APPROVED_REVIEWER_EMAIL>`. Cloudflare Access enforces email validation and Cloudflare Access one-time PIN (OTP) issuance.
 - **Observed Non-Blocking Warnings:** `cloudflared` logged non-blocking warnings regarding ICMP ping group permissions and QUIC receive buffer size. These did not affect tunnel registration, QUIC transport, or OTP authentication.
 - **Session Lifespan & Ephemerality:** Hostnames on `*.trycloudflare.com` are temporary and change upon each tunnel instantiation. Stopping `cloudflared` revokes external routing immediately.
 

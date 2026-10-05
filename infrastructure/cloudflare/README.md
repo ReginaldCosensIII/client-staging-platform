@@ -65,8 +65,8 @@ Once pre-checks succeed, `cloudflared` selects QUIC as its primary transport and
 2. **Identity Challenge:** Cloudflare displays an Access login screen prompting the reviewer for their email address.
 3. **Authorized Visitor Flow:**
    - Reviewer enters an allowlisted email (`<APPROVED_REVIEWER_EMAIL>`).
-   - Cloudflare generates and emails a temporary cryptographic 6-digit One-Time PIN (OTP).
-   - Upon submitting the correct PIN, Cloudflare sets an authenticated session cookie and proxies requests over the secure tunnel directly to `http://127.0.0.1:8080`.
+   - Cloudflare generates and emails a Cloudflare Access one-time PIN (OTP).
+   - Upon submitting the correct PIN, Cloudflare sets an authenticated session cookie and proxies requests over the secure tunnel directly to the origin, successfully reaching the protected nginx origin page (`http://127.0.0.1:8080`).
 4. **Unauthorized Visitor Flow:**
    - Visitor enters a non-allowlisted email (`<UNAPPROVED_EMAIL>`).
    - Cloudflare Access rejects the attempt immediately at the edge with an HTTP `403 Forbidden` (`broker assertion identity is not authorized`).
@@ -101,10 +101,12 @@ Neither warning hindered tunnel registration, QUIC connectivity, OTP generation,
 
 ---
 
-## 5. Long-Term Architecture Transition (CP-006+)
+## 5. Candidate Future Evolution: Named Tunnels & Custom Domains
 
-For long-term and multi-tenant staging (Version III Portal):
-- **Named Persistent Tunnels:** Transition from Quick Tunnels to pre-created, named Cloudflare Tunnels managed via Cloudflare Zero Trust.
-- **Custom Branded Domain:** Route traffic through a permanent custom hostname (e.g., `preview.example.com`).
-- **Persistent Service:** Manage `cloudflared` via a systemd background daemon (`cloudflared.service`) with auto-restart on reboot.
+A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs.
+
+Candidate future directions include:
+- **Named Persistent Tunnels:** Transitioning from Quick Tunnels to pre-created, named Cloudflare Tunnels managed via Cloudflare Zero Trust.
+- **Custom Branded Domain:** Routing traffic through a permanent custom hostname (e.g., `preview.example.com`).
+- **Persistent Service:** Managing `cloudflared` via a systemd background daemon (`cloudflared.service`) with auto-restart on reboot.
 - **Centralized Access Policies:** Centrally managed Access policies through Cloudflare Zero Trust dashboard with group-based access rules.

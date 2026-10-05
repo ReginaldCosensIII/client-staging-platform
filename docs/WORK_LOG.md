@@ -109,19 +109,19 @@
   - Confirmed local HTTP response: `curl.exe -i http://127.0.0.1:8080` returned `HTTP/1.1 200 OK`.
   - Confirmed host TCP listener: `Get-NetTCPConnection -LocalPort 8080` showed listener bound strictly to `127.0.0.1:8080` (no listener on `0.0.0.0` or `[::]`).
 - **Protected Quick Tunnel Startup:**
-  - Executed command: `cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail cesdeveloperservices@gmail.com`.
-  - First generated ephemeral hostname: `https://filled-jail-synopsis-mall.trycloudflare.com`.
+  - Executed command: `cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail <APPROVED_REVIEWER_EMAIL>`.
+  - First generated ephemeral hostname: `https://<random-words-1>.trycloudflare.com`.
   - Confirmed tunnel connected via QUIC to Cloudflare Edge (iad10).
   - Unauthenticated curl check verified `302 Found` redirecting to `https://login.trycloudflare.com/authorize`.
 - **Authorized Reviewer Validation (Human Project Lead):**
-  - Project lead opened `https://filled-jail-synopsis-mall.trycloudflare.com`.
+  - Project lead opened `https://<random-words-1>.trycloudflare.com`.
   - Cloudflare Access email challenge displayed.
-  - Entered approved email `cesdeveloperservices@gmail.com`.
-  - Received 6-digit One-Time PIN (OTP) in inbox.
+  - Entered approved email `<APPROVED_REVIEWER_EMAIL>`.
+  - Received Cloudflare Access one-time PIN (OTP) in inbox.
   - Submitted PIN; authentication succeeded.
   - The `Client Staging Platform — Infrastructure Test` confirmation card was displayed.
 - **Unauthorized Reviewer Validation (Human Project Lead):**
-  - Project lead opened `https://filled-jail-synopsis-mall.trycloudflare.com` in an incognito window with a non-allowlisted email address.
+  - Project lead opened `https://<random-words-1>.trycloudflare.com` in an incognito window with a non-allowlisted email address.
   - Access was blocked/denied at the Cloudflare edge (`broker assertion identity is not authorized`).
   - Preview application content was never exposed.
 - **External Network Validation (Human Project Lead):**
@@ -129,11 +129,11 @@
   - Confirmed external end-to-end traversal: external browser -> Cloudflare edge Access -> outbound tunnel -> host loopback origin.
 - **Tunnel Shutdown Validation:**
   - Terminated the `cloudflared` Quick Tunnel process.
-  - Queried `https://filled-jail-synopsis-mall.trycloudflare.com`; returned `HTTP/1.1 502 Bad Gateway` (ingress removed).
+  - Queried `https://<random-words-1>.trycloudflare.com`; returned `HTTP/1.1 502 Bad Gateway` (ingress removed).
   - Queried local origin: `curl.exe -I http://127.0.0.1:8080` returned `HTTP/1.1 200 OK` (local origin remained fully operational).
 - **Hostname Recreation Proof:**
   - Started a second Quick Tunnel using identical parameters.
-  - Second generated ephemeral hostname: `https://hang-glass-each-ceo.trycloudflare.com`.
+  - Second generated ephemeral hostname: `https://<random-words-2>.trycloudflare.com`.
   - Confirmed hostname differed from the first, empirically validating the temporary/ephemeral nature of Quick Tunnel URLs.
   - Terminated the second tunnel process.
 - **Final Cleanup:**
@@ -164,8 +164,8 @@
 - **Lightweight Quick Regression Test:**
   - Started Docker container via `docker compose up -d`.
   - Verified local origin: `curl.exe -I http://127.0.0.1:8080` returned `HTTP/1.1 200 OK`.
-  - Started protected Quick Tunnel: `cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail cesdeveloperservices@gmail.com`.
-  - Verified successful startup and capture of temporary URL (`https://expression-monday-items-agencies.trycloudflare.com`).
+  - Started protected Quick Tunnel: `cloudflared tunnel --url http://127.0.0.1:8080 --allowed-mail <APPROVED_REVIEWER_EMAIL>`.
+  - Verified successful startup and capture of temporary URL (`https://<random-words-3>.trycloudflare.com`).
   - Confirmed tunnel log advertised `Authentication: One-Time PIN (using Cloudflare Access)`.
   - Verified HTTP request redirect to Cloudflare Access login challenge (`302 Found`).
   - Terminated Quick Tunnel process.
@@ -224,8 +224,15 @@
 - **Date:** 2026-10-05
 - **Execution Mode:** Interactive manual validation & testing on remote host
 - **Workload Execution & Local Origin Isolation:**
-  - Ran static infrastructure test container (`examples/preview-test`, `nginx:alpine`) via `docker compose up -d`.
-  - Verified container running: `docker compose ps` showed `127.0.0.1:8080->80/tcp`.
+  - Ran static infrastructure test container (`nginx:alpine`) directly via `docker run` with loopback-only publishing:
+    ```bash
+    docker run -d \
+      --name preview-test \
+      --restart no \
+      -p 127.0.0.1:8080:80 \
+      nginx:alpine
+    ```
+  - Verified container running: `docker ps` showed `preview-test` with `127.0.0.1:8080->80/tcp`.
   - Verified local TCP socket listener: `sudo ss -ltnp | grep 8080` confirmed listener strictly on `127.0.0.1:8080` (no listener on `0.0.0.0` or public interface).
   - Verified local HTTP response: `curl -I http://127.0.0.1:8080` returned `HTTP/1.1 200 OK`.
 - **Direct-Origin Negative Proof:**
@@ -239,9 +246,11 @@
   - Temporary URL generated: dynamic `*.trycloudflare.com` hostname.
   - Non-blocking warnings observed: ICMP ping group range warning and QUIC receive buffer size limit (both benign; connectivity and auth unaffected).
 - **Authorized Reviewer Validation:**
-  - Navigated to temporary URL. Cloudflare Access login challenge displayed.
-  - Entered `<APPROVED_REVIEWER_EMAIL>`. Received 6-digit OTP in email inbox.
-  - Submitted OTP; authentication succeeded. Preview confirmation card rendered correctly in browser.
+  - An earlier test produced an unexpected intermediate Cloudflare login page.
+  - Authorized reviewer flow was re-tested in a clean session with a new protected Quick Tunnel URL.
+  - Navigated to the temporary URL. Cloudflare Access login challenge displayed.
+  - Entered `<APPROVED_REVIEWER_EMAIL>`. Received Cloudflare Access one-time PIN (OTP) in email inbox.
+  - Submitted OTP; authentication succeeded. The user successfully reached the protected nginx origin page (`Welcome to nginx!`) as the final verified acceptance result.
 - **Unauthorized Reviewer Validation:**
   - Attempted access using non-allowlisted email (`<UNAPPROVED_EMAIL>`).
   - Cloudflare Access rejected request at edge: HTTP `403 Forbidden` (`broker assertion identity is not authorized`).
@@ -258,7 +267,7 @@
   - Launched second Quick Tunnel with identical parameters.
   - Generated second temporary `*.trycloudflare.com` URL. Confirmed URL differed from the first, empirically validating ephemeral process-based lifecycle. Terminated second tunnel.
 - **Workload Cleanup:**
-  - Executed `docker compose down`. Verified zero running containers via `docker compose ps`.
+  - Stopped container via `docker stop preview-test` and removed via `docker rm preview-test`. Verified zero running containers via `docker ps`.
 
 ---
 
@@ -278,3 +287,16 @@
   - Updated `scripts/README.md` noting manual CP-003/CP-004 infrastructure proof.
   - Added ADR-016 through ADR-026 to `docs/DECISION_LOG.md` recording all architectural and operational decisions accepted during CP-003 and CP-004.
   - Audited all files for secrets, private keys, passwords, live reviewer emails, live URLs, and raw public IP addresses.
+
+---
+
+## Checkpoint CP-004R2: Remote Preview Documentation Accuracy Repair
+
+- **Date:** 2026-10-05
+- **Branch:** `feat/cp-004-remote-preview-proof`
+- **Scope of Accuracy Repair:**
+  - Repaired authorized reviewer evidence: documented that an initial test produced an intermediate login page, but a clean session re-test successfully reached the protected nginx origin page (`Welcome to nginx!`) as the verified acceptance result.
+  - Repaired Docker execution wording: documented that the CP-004 remote proof workload was launched directly via `docker run` (`docker run -d --name preview-test --restart no -p 127.0.0.1:8080:80 nginx:alpine`) rather than Docker Compose.
+  - Removed unsupported 'cryptographic 6-digit' assertions across all documentation, replacing them with accurate generic language (`Cloudflare Access one-time PIN (OTP)`).
+  - Softened future named-tunnel roadmap language across documentation to present named tunnels and custom domains as a candidate future direction rather than a locked commitment.
+  - Performed sensitive data audit confirming zero live temporary hostnames, raw public IPs, or reviewer credentials in git diff.

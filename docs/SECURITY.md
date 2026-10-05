@@ -22,7 +22,7 @@ Security is designed into the platform architecture from the ground up through a
 > **Known Operational Limitations:**
 > - Quick Tunnels are intended for short testing/review windows; they provide no SLA or uptime guarantee.
 > - Hostnames are ephemeral (`*.trycloudflare.com`) and change each time a tunnel is recreated.
-> - Availability depends on the remote `cloudflared` process remaining active. Permanent staging will eventually migrate to named tunnels on stable domains.
+> - Availability depends on the remote `cloudflared` process remaining active. A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs.
 
 ---
 
@@ -75,7 +75,7 @@ Rather than building a bespoke identity stack (which introduces database managem
 - **Workflow:**
   1. Reviewer navigates to preview URL (`https://*.trycloudflare.com`).
   2. Cloudflare Access intercepts request and prompts for the user's business email.
-  3. If the email matches `--allowed-mail <APPROVED_REVIEWER_EMAIL>`, Cloudflare sends a secure temporary cryptographic 6-digit PIN to their inbox.
+  3. If the email matches `--allowed-mail <APPROVED_REVIEWER_EMAIL>`, Cloudflare sends a Cloudflare Access one-time PIN (OTP) to their inbox.
   4. Upon entering the correct PIN, Cloudflare issues an authenticated session token (via secure, HTTP-only cookie).
   5. Subsequent requests pass through the tunnel directly to `http://127.0.0.1:8080`.
 - **Unauthorized Visitors:** Non-allowlisted email addresses (`<UNAPPROVED_EMAIL>`) receive an immediate `403 Forbidden` rejection at the edge (`broker assertion identity is not authorized`). `cloudflared` records `HTTP request authorization failed before origin selection`, and zero application bytes or assets are exposed.
@@ -98,7 +98,7 @@ Rather than building a bespoke identity stack (which introduces database managem
 
 ## 5. MVP Scope vs. Future Production Security
 
-| Security Dimension | Current MVP Baseline (CP-004) | Future Platform Evolution (CP-006+) |
+| Security Dimension | Current MVP Baseline (CP-004) | Future Platform Evolution (Candidate Direction) |
 | :--- | :--- | :--- |
 | **Ingress Pattern** | Ephemeral Protected Quick Tunnel | Persistent Named Tunnel with custom domain |
 | **Domain & Certs** | Dynamic `*.trycloudflare.com` / Cloudflare certs | Branded domain (`preview.example.com`) / Managed TLS |

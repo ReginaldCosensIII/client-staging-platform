@@ -131,13 +131,15 @@ Installed from Cloudflare's official Debian/Ubuntu repository (`pkg.cloudflare.c
 
 ## 10. Origin Isolation & Network Verification (CP-004 Proven)
 
+- **Workload Launch:** Launched directly via `docker run -d --name preview-test --restart no -p 127.0.0.1:8080:80 nginx:alpine`.
 - **Loopback Origin Publication:** Container ports bind strictly to `127.0.0.1:8080:80`.
 - **Local Listener:** Socket verified on `127.0.0.1:8080` (no listener on `0.0.0.0` or public interface).
 - **Direct-Origin Negative Test:** Direct external HTTP requests to `http://<DROPLET_PUBLIC_IP>:8080` time out.
 - **Tunnel Ingress Model:**
   ```text
-  Reviewer -> Cloudflare Edge (Email OTP) -> Outbound QUIC Tunnel -> cloudflared -> http://127.0.0.1:8080 -> Docker
+  Reviewer -> Cloudflare Edge (Email OTP) -> Outbound QUIC Tunnel -> cloudflared -> http://127.0.0.1:8080 -> nginx container
   ```
+- **Authorized Reviewer Proof:** Verified that allowlisted email submission and OTP entry successfully routed through the tunnel to the protected nginx origin page (`Welcome to nginx!`).
 - **Teardown Independence:** Stopping `cloudflared` drops external access immediately (returns Cloudflare 530) while the origin container remains running and healthy on `127.0.0.1:8080`.
 
 ---

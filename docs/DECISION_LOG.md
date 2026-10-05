@@ -243,7 +243,7 @@ This log documents all major architectural and operational decisions accepted fo
   - Aligns with coordinated, scheduled stakeholder review windows.
   - Clean separation: stopping the tunnel process (`Ctrl+C`) immediately revokes all external access while leaving the workload running privately.
   - Zero ongoing background ingress exposure when review sessions are not actively in progress.
-- **Consequences:** Requires manual execution by the administrator to start review sessions; persistent background services remain deferred to CP-006+.
+- **Consequences:** Requires manual execution by the administrator to start review sessions; persistent background services remain a candidate future direction if justified by project needs.
 
 ---
 
@@ -254,7 +254,7 @@ This log documents all major architectural and operational decisions accepted fo
 - **Decision:** Do NOT install or enable a persistent systemd service for `cloudflared` during the current MVP.
 - **Rationale:**
   - Quick Tunnels are ephemeral and generate dynamic URLs upon restart. An auto-restarting Quick Tunnel daemon would generate new, untracked URLs without administrator knowledge.
-  - A persistent system service is only appropriate when paired with named tunnels and stable custom domains in CP-006+.
+  - A persistent system service is only appropriate if the platform evolves to named tunnels and stable custom domains.
 - **Consequences:** Preserves operator awareness and intentional session management.
 
 ---
@@ -263,11 +263,11 @@ This log documents all major architectural and operational decisions accepted fo
 - **Date:** 2026-10-05
 - **Status:** Accepted (Reaffirmed in CP-004)
 - **Context:** Staging could use permanent branded DNS names (e.g., `preview.example.com`) and named Cloudflare Tunnels requiring Cloudflare account authentication.
-- **Decision:** Retain the decision to defer custom domains and named tunnels to CP-006+.
+- **Decision:** Retain the decision to defer custom domains and named tunnels to later project phases.
 - **Rationale:**
   - The protected Quick Tunnel completely proves external stakeholder access and OTP authentication with zero DNS overhead and $0 Cloudflare costs.
   - Keeps CP-004 and CP-005 focused on host provisioning and client application integration.
-- **Consequences:** Quick Tunnel hostnames remain ephemeral for early testing.
+- **Consequences:** Quick Tunnel hostnames remain ephemeral for early testing. A later production-style evolution may use a named Cloudflare Tunnel, stable custom hostname, and persistent background service management if justified by project needs.
 
 ---
 
